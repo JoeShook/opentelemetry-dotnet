@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using OpenTelemetry.Internal;
 
@@ -33,10 +34,23 @@ namespace OpenTelemetry.Resources
         private static Resource DefaultResource { get; } = new Resource(new Dictionary<string, object>
         {
             [ResourceSemanticConventions.AttributeServiceName] = "unknown_service"
-                + (string.IsNullOrWhiteSpace(System.Diagnostics.Process.GetCurrentProcess().ProcessName)
+                + (string.IsNullOrWhiteSpace(GetCurrentProcessName())
                 ? string.Empty :
                 ":" + System.Diagnostics.Process.GetCurrentProcess().ProcessName),
         });
+
+        private static string GetCurrentProcessName()
+        {
+            try
+            {
+                return System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+            }
+            catch (Exception)
+            {
+                // Expected when hosted in WebAssembly
+                return null;
+            }
+        }
 
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with Default
