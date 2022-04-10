@@ -1,4 +1,4 @@
-// <copyright file="WeatherForecast.cs" company="OpenTelemetry Authors">
+// <copyright file="ClientSemantics.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-namespace BlazerExample.Shared
+namespace BlazorExample.Client
 {
-    public class WeatherForecast
+    internal static class ClientSemantics
     {
-        public DateTime Date { get; set; }
-
-        public int TemperatureC { get; set; }
-
-        public string? Summary { get; set; }
-
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+        public const string ServiceName = "BlazorExample_ClientService";
+        public const string UiActivity = "WeatherRequest";
     }
 }

@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using BlazerExample.Shared;
+using BlazorExample.Shared;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BlazerExample.Server.Controllers
+namespace BlazorExample.Server.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -25,42 +25,32 @@ namespace BlazerExample.Server.Controllers
     {
         private static readonly string[] Summaries = new[]
         {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
         };
 
-        private static readonly HttpClient HttpClient = new HttpClient();
-        private readonly ILogger<WeatherForecastController> logger;
+        private readonly ILogger<WeatherForecastController> _logger;
+        private readonly HttpClient _httpClient = new();
 
         public WeatherForecastController(ILogger<WeatherForecastController> logger)
         {
-            this.logger = logger;
+            _logger = logger;
         }
 
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
-            using var scope = this.logger.BeginScope("{Id}", Guid.NewGuid().ToString("N"));
-
             // Making an http call here to serve as an example of
             // how dependency calls will be captured and treated
             // automatically as child of incoming request.
-            var res = HttpClient.GetStringAsync("http://google.com").Result;
+            var res = _httpClient.GetStringAsync("http://www.google.com").Result;
 
-            var rng = new Random();
-            var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)],
+                TemperatureC = Random.Shared.Next(-20, 55),
+                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
-                .ToArray();
-
-            this.logger.LogInformation(
-                "WeatherForecasts generated {count}: {forecasts}",
-                forecast.Length,
-                forecast);
-
-            return forecast;
+            .ToArray();
         }
     }
 }

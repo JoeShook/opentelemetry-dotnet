@@ -1,7 +1,10 @@
-@page "/fetchdata"
-@using BlazerExample.Shared
+﻿@page "/fetchdata"
+@using BlazorExample.Shared
 @using System.Diagnostics
+@using OpenTelemetry.Trace
+
 @inject HttpClient Http
+@inject TracerProvider traceProvider
 
 <PageTitle>Weather forecast</PageTitle>
 
@@ -39,20 +42,15 @@ else
 }
 
 @code {
+
     private WeatherForecast[]? forecasts;
 
     protected override async Task OnInitializedAsync()
     {
-      using var source = new ActivitySource(ClientSemantics.UiActivity);
-      {
-        using var activity = source.StartActivity("Weather Data", ActivityKind.Client);
-        activity?.AddEvent(new ActivityEvent("The count button was clicked"));
+        var MyActivitySource = new ActivitySource(ClientSemantics.ServiceName);
+        using var activity = MyActivitySource.StartActivity("SayHello");
+        activity?.SetTag("foo", 1);
 
         forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
-
-        activity?.SetTag("count", forecasts.Length);
-        
-      }
-        
     }
 }
