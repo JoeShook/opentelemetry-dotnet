@@ -1,10 +1,10 @@
-﻿@page "/fetchdata"
+@page "/fetchdata"
 @using BlazorExample.Shared
-@using System.Diagnostics
-@using OpenTelemetry.Trace
+@* @using System.Diagnostics *@
+@* @using OpenTelemetry.Trace *@
 
 @inject HttpClient Http
-@inject TracerProvider traceProvider
+@* @inject TracerProvider traceProvider *@
 
 <PageTitle>Weather forecast</PageTitle>
 
@@ -47,9 +47,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var MyActivitySource = new ActivitySource(ClientSemantics.ServiceName);
-        using var activity = MyActivitySource.StartActivity("SayHello");
-        activity?.SetTag("foo", 1);
+        // var MyActivitySource = new ActivitySource(ClientSemantics.ServiceName);
+        // using var activity = MyActivitySource.StartActivity("SayHello");
+        // activity?.SetTag("foo", 1);
 
         forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
     }

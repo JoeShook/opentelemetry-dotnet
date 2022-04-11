@@ -20,27 +20,64 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using System.Diagnostics;
-
-
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+// OpenTelemetry
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
-var resourceBuilder = ResourceBuilder.CreateEmpty().AddService(ClientSemantics.ServiceName, serviceVersion: assemblyVersion,
-    serviceInstanceId: Environment.MachineName);
+// Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
+var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
+
+var resourceBuilder = tracingExporter switch
+{
+    "jaeger" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "zipkin" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "otlp" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    _ => ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+};
+
 // Traces
 builder.Services.AddOpenTelemetryTracing(options =>
 {
     options.SetResourceBuilder(resourceBuilder);
     options.SetSampler(new AlwaysOnSampler());
-    options.AddSource(ClientSemantics.UiActivity);
+    // options.AddSource(ClientSemantics.UiActivity);
     options.AddHttpClientInstrumentation(c => c.RecordException = true);
-
     options.AddConsoleExporter();
+    //switch (tracingExporter)
+    //{
+    //    // case "jaeger":
+    //    //     options.AddJaegerExporter();
+    //    //
+    //    //     builder.Services.Configure<JaegerExporterOptions>(builder.Configuration.GetSection("Jaeger"));
+    //    //
+    //    //     // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
+    //    //     builder.Services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+    //    //     break;
+    //    //
+    //    // case "zipkin":
+    //    //     options.AddZipkinExporter();
+    //    //
+    //    //     builder.Services.Configure<ZipkinExporterOptions>(builder.Configuration.GetSection("Zipkin"));
+    //    //     break;
+
+    //    case "otlp":
+    //        options.AddOtlpExporter(otlpOptions =>
+    //        {
+    //            otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
+    //            otlpOptions.ExportProcessorType = ExportProcessorType.Simple;
+    //            otlpOptions.Endpoint = new Uri($"{builder.Configuration.GetValue<string>("Otlp:Endpoint")}/v1/traces");
+    //        });
+    //        break;
+
+    //    default:
+    //        options.AddConsoleExporter();
+
+    //        break;
+    //}
 });
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });

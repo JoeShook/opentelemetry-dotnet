@@ -28,12 +28,13 @@ namespace BlazorExample.Server.Controllers
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
         };
 
-        private readonly ILogger<WeatherForecastController> _logger;
-        private readonly HttpClient _httpClient = new();
+        private static readonly HttpClient HttpClient = new();
+
+        private readonly ILogger<WeatherForecastController> logger;
 
         public WeatherForecastController(ILogger<WeatherForecastController> logger)
         {
-            _logger = logger;
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpGet]
@@ -42,15 +43,24 @@ namespace BlazorExample.Server.Controllers
             // Making an http call here to serve as an example of
             // how dependency calls will be captured and treated
             // automatically as child of incoming request.
-            var res = _httpClient.GetStringAsync("http://www.google.com").Result;
+            var res = HttpClient.GetStringAsync("http://www.google.com").Result;
 
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            var rng = new Random();
+            var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                TemperatureC = rng.Next(-20, 55),
+                Summary = Summaries[rng.Next(Summaries.Length)],
             })
             .ToArray();
+
+            this.logger.LogInformation(
+                "WeatherForecasts generated {count}: {forecasts}",
+                forecast.Length,
+                forecast);
+
+
+            return forecast;
         }
     }
 }
