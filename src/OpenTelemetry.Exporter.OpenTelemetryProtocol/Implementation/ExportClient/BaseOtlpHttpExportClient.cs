@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using OpenTelemetry.Internal;
 
@@ -76,7 +77,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
         {
 #if NET5_0_OR_GREATER
-            return this.HttpClient.Send(request, cancellationToken);
+            if (RuntimeInformation.RuntimeIdentifier != "browser-wasm")
+            {
+                return this.HttpClient.Send(request, cancellationToken);
+            }
+            else
+            {
+                return this.HttpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
+            }
 #else
             return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
 #endif

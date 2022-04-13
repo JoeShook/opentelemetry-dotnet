@@ -1,10 +1,17 @@
-﻿@page "/fetchdata"
+@page "/fetchdata"
 @using BlazorExample.Shared
 @using System.Diagnostics
+@using OpenTelemetry
+@using OpenTelemetry.Exporter
+@using OpenTelemetry.Resources
 @using OpenTelemetry.Trace
 
 @inject HttpClient Http
-@inject TracerProvider traceProvider
+
+//
+//  WebAsm in .Net 6.0 currently single-threaded.  Enforced by depenedent .net libraries.  See comments in program.cs
+//
+@* @inject TracerProvider traceProvider *@
 
 <PageTitle>Weather forecast</PageTitle>
 
@@ -47,10 +54,33 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var MyActivitySource = new ActivitySource(ClientSemantics.ServiceName);
-        using var activity = MyActivitySource.StartActivity("SayHello");
-        activity?.SetTag("foo", 1);
+        // var MyActivitySource = new ActivitySource(ClientSemantics.ServiceName);
+        // using var activity = MyActivitySource.StartActivity("SayHello");
+        // activity?.SetTag("foo", 1);
 
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
+        using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+          .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("client-otlp-test"))
+          .AddSource("BlazorUI-Weather")
+          .SetSampler(new AlwaysOnSampler())
+          .AddHttpClientInstrumentation(c => c.RecordException = true)
+          .AddZipkinExporter(o =>
+          {
+              o.Endpoint = new Uri("http://localhost:9411/api/v2/spans");
+              o.ExportProcessorType = ExportProcessorType.Simple;
+          })
+          .Build();
+        using var source = new ActivitySource("BlazorUI-Weather");
+        using (var activity = source.StartActivity("Click", ActivityKind.Client))
+        {
+            Console.WriteLine(activity.TraceId);
+            activity?.AddEvent(new ActivityEvent("The weather button was clicked"));
+            activity?.SetTag("mouse.x", 123);
+            activity?.SetTag("mouse.y", 2323);
+          
+            forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
+          
+        }
+
+      await Task.Delay(500);
     }
 }

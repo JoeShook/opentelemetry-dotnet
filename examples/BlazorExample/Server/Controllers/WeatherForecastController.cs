@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Runtime.InteropServices;
 using BlazorExample.Shared;
 using Microsoft.AspNetCore.Mvc;
 

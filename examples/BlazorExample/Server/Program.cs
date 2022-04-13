@@ -17,6 +17,8 @@
 using System.Reflection;
 using BlazorExample.Server;
 using Microsoft.AspNetCore.ResponseCompression;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -27,8 +29,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
-var resourceBuilder = ResourceBuilder.CreateEmpty().AddService(ServerSemantics.ServiceName, serviceVersion: assemblyVersion,
-    serviceInstanceId: Environment.MachineName);
+// Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
+var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
+
+var resourceBuilder = tracingExporter switch
+{
+    "jaeger" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "zipkin" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "otlp" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    _ => ResourceBuilder.CreateDefault().AddService(ServerSemantics.ServiceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+};
+
+
 // Traces
 builder.Services.AddOpenTelemetryTracing(options =>
 {
@@ -40,11 +52,54 @@ builder.Services.AddOpenTelemetryTracing(options =>
     options.AddConsoleExporter();
 });
 
+// Traces
+builder.Services.AddOpenTelemetryTracing(options =>
+{
+    options
+        .SetResourceBuilder(resourceBuilder)
+        .SetSampler(new AlwaysOnSampler())
+        .AddHttpClientInstrumentation()
+        .AddAspNetCoreInstrumentation();
 
+    switch (tracingExporter)
+    {
+        // case "jaeger":
+        //     options.AddJaegerExporter();
+        //
+        //     builder.Services.Configure<JaegerExporterOptions>(builder.Configuration.GetSection("Jaeger"));
+        //
+        //     // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
+        //     builder.Services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+        //     break;
 
+        case "zipkin":
+            options.AddZipkinExporter();
+
+            builder.Services.Configure<ZipkinExporterOptions>(builder.Configuration.GetSection("Zipkin"));
+            break;
+
+        case "otlp":
+            // options.AddOtlpExporter(otlpOptions =>
+            // {
+            //     otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
+            //     otlpOptions.ExportProcessorType = ExportProcessorType.Simple;
+            //     otlpOptions.Endpoint = new Uri($"{builder.Configuration.GetValue<string>("Otlp:Endpoint")}/v1/traces");
+            // });
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.ExportProcessorType = ExportProcessorType.Simple;
+                otlpOptions.Endpoint = new Uri($"{builder.Configuration.GetValue<string>("Otlp:Endpoint")}");
+            });
+            break;
+
+        default:
+            options.AddConsoleExporter();
+
+            break;
+    }
+});
 
 // Add services to the container.
-
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
@@ -59,16 +114,14 @@ else
 {
     app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
-
 
 app.MapRazorPages();
 app.MapControllers();
