@@ -1,0 +1,48 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+  zipkin:
+    cors:
+      allowed_origins: "*"
+      allowed_headers: "*"
+
+exporters:
+  prometheus:
+    endpoint: :8889
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    format: json
+    labels:
+      resource:
+        service.name: "service_name"
+        service.instance.id: "service_instance_id"
+  logging:
+    loglevel: debug
+
+service:
+  pipelines:
+    metrics:
+      receivers: [ otlp ]
+      exporters: [ prometheus ]
+    traces:
+      receivers: [ otlp, zipkin ]
+      exporters: [ otlp ]
+    logs:
+      receivers: [ otlp ]
+      exporters: [ loki, logging ]
+  telemetry:
+    logs:
+      level: "debug"
+
+  extensions: [health_check, zpages]
+  
+extensions:
+      health_check: {}
+      zpages: {}
+      

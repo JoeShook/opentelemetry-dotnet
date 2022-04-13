@@ -6,11 +6,12 @@
 @using OpenTelemetry.Resources
 @using OpenTelemetry.Trace
 
-@inject HttpClient Http
+@inject HttpClient _http
+@inject IConfiguration _configuration
 
-//
-//  WebAsm in .Net 6.0 currently single-threaded.  Enforced by depenedent .net libraries.  See comments in program.cs
-//
+@*
+  WebAsm in .Net 6.0 currently single-threaded.  Enforced by depenedent .net libraries.  See comments in program.cs
+*@
 @* @inject TracerProvider traceProvider *@
 
 <PageTitle>Weather forecast</PageTitle>
@@ -65,7 +66,7 @@ else
           .AddHttpClientInstrumentation(c => c.RecordException = true)
           .AddZipkinExporter(o =>
           {
-              o.Endpoint = new Uri("http://localhost:9411/api/v2/spans");
+              o.Endpoint = new Uri($"{_configuration.GetValue<string>("Zipkin:Endpoint")}");
               o.ExportProcessorType = ExportProcessorType.Simple;
           })
           .Build();
@@ -77,7 +78,7 @@ else
             activity?.SetTag("mouse.x", 123);
             activity?.SetTag("mouse.y", 2323);
           
-            forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
+            forecasts = await _http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
           
         }
 
