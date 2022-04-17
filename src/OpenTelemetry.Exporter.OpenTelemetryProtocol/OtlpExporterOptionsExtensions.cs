@@ -111,6 +111,16 @@ namespace OpenTelemetry.Exporter
                 _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
             };
 
+        public static IExportClient<Opentelemetry.Proto.Collector.Logs.V1.ExportLogsServiceRequest> GetLogsExportClient(this OtlpExporterOptions options) =>
+            options.Protocol switch
+            {
+                OtlpExportProtocol.Grpc => new OtlpGrpcLogsExportClient(options),
+                OtlpExportProtocol.HttpProtobuf => new OtlpHttpLogsExportClient(
+                    options,
+                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
+            };
+
         public static OtlpExportProtocol? ToOtlpExportProtocol(this string protocol) =>
             protocol.Trim() switch
             {

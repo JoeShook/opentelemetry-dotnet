@@ -22,11 +22,11 @@ using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
     /// <summary>Class for sending OTLP metrics export request over gRPC.</summary>
-    internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportLogsServiceRequest>
+    internal sealed class OtlpGrpcLogsExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportLogsServiceRequest>
     {
         private readonly OtlpCollector.LogsService.LogsServiceClient logsClient;
 
-        public OtlpGrpcLogExportClient(OtlpExporterOptions options, OtlpCollector.LogsService.LogsServiceClient logsServiceClient = null)
+        public OtlpGrpcLogsExportClient(OtlpExporterOptions options, OtlpCollector.LogsService.LogsServiceClient logsServiceClient = null)
             : base(options)
         {
             if (logsServiceClient != null)
