@@ -15,38 +15,36 @@
 // </copyright>
 
 // using System.Reflection;
+
+using System.Reflection;
 using BlazorExample.Client;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-// using OpenTelemetry;
-// using OpenTelemetry.Exporter;
-// using OpenTelemetry.Resources;
-// using OpenTelemetry.Trace;
-
-
-
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-
 //
 //  See OpenTelemetry exporter comment below.
 //
 
-// var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
 // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
-// var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
-//
-// var resourceBuilder = tracingExporter switch
-// {
-//     "jaeger" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
-//     "zipkin" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
-//     "otlp" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
-//     _ => ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
-// };
+var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
+
+var resourceBuilder = tracingExporter switch
+{
+    "jaeger" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "zipkin" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "otlp" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    _ => ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+};
 
 // Traces
 // builder.Services.AddOpenTelemetryTracing(options =>
@@ -118,7 +116,39 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // }
 // });
 
+// Logging
+// builder.Logging.ClearProviders();
 
+//
+// I could not get this to even trigger in the debugger like the previous trace example, so moving inline.
+//
+
+// builder.Logging.AddOpenTelemetry(options =>
+// {
+//     options.SetResourceBuilder(resourceBuilder);
+//     var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+//     switch (logExporter)
+//     {
+//         case "otlp":
+//             options.AddOtlpExporter(otlpOptions =>
+//             {
+//                 otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
+//                 otlpOptions.ExportProcessorType = ExportProcessorType.Simple;
+//                 otlpOptions.Endpoint = new Uri($"{builder.Configuration.GetValue<string>("Otlp:Endpoint")}/v1/logs");
+//             });
+//             break;
+//         default:
+//             options.AddConsoleExporter();
+//             break;
+//     }
+// });
+//
+// builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+// {
+//     opt.IncludeScopes = true;
+//     opt.ParseStateValues = true;
+//     opt.IncludeFormattedMessage = true;
+// });
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 

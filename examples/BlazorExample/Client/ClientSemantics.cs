@@ -16,9 +16,30 @@
 
 namespace BlazorExample.Client
 {
+    /// <summary>
+    /// General naming and organizing of telemetry semantics for the Blazor Client
+    /// </summary>
     internal static class ClientSemantics
     {
-        public const string ServiceName = "BlazorExample_ClientService";
-        public const string UiActivity = "WeatherRequest";
+        public const string ServiceName = "BlazorExample_Client";
+
+        /// <summary>
+        /// The Activity display names
+        /// </summary>
+        public static class DisplayName
+        {
+            public const string CounterButtonClick = "Counter_Click";
+            public const string WeatherButtonClick = "Weather_Click";
+        }
+
+        /// <summary>
+        /// Activity Source names.
+        /// Remember an <see cref="ActivitySource"/> name will need a listener to be recorded
+        /// </summary>
+        public static class SubscribedSourceName
+        {
+            public const string UIWeatherRequest = "WeatherRequest";
+            public const string UICounter = "Counter";
+        }
     }
 }

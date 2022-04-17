@@ -4,6 +4,7 @@
 @using OpenTelemetry.Trace
 @using System.Diagnostics
 @using OpenTelemetry.Exporter
+@using OpenTelemetry.Logs
 
 @inject IConfiguration configuration
 
@@ -26,33 +27,47 @@
 
   private void Trace(int currentCount)
   {
-    using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-      .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("blazor-otel-client"))
-      .AddSource("BlazorUI")
-      // .AddZipkinExporter(o =>
-      // {
-      //   o.Endpoint = new Uri("http://localhost:9411/api/v2/spans");
-      //   o.ExportProcessorType = ExportProcessorType.Simple;
-      // })
-
-      //
-      // Don't forget to set the cors 
-      //
-
-      .AddOtlpExporter(o =>
+    var subscribedSourceName = ClientSemantics.SubscribedSourceName.UICounter;
+    var resourceBuilder = ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName);
+    // Only TraceProvider is OpenTelemetry specific here.
+    using var openTelemetry = Sdk.CreateTracerProviderBuilder() 
+      .SetResourceBuilder(resourceBuilder)
+      .AddSource(subscribedSourceName)
+      .AddZipkinExporter(o =>
       {
-        o.Protocol = OtlpExportProtocol.HttpProtobuf;
-        o.Endpoint = new Uri($"{configuration.GetValue<string>("Otlp:Endpoint")}/v1/traces");
+        o.Endpoint = new Uri($"{configuration.GetValue<string>("Zipkin:Endpoint")}");
         o.ExportProcessorType = ExportProcessorType.Simple;
-      })
+      })      
       .Build();
-    using var source = new ActivitySource("BlazorUI");
-    using (var activity = source.StartActivity("Click", ActivityKind.Client))
+
+    using var loggingFactory = LoggerFactory.Create(builder =>
     {
-      activity?.AddEvent(new ActivityEvent("The count button was clicked"));
-      activity?.SetTag("count", currentCount);
-      activity?.SetTag("mouse.x", 123);
-      activity?.SetTag("mouse.y", 2323);
-    }
+      builder.AddOpenTelemetry(options =>
+      {
+        options.SetResourceBuilder(resourceBuilder);
+        options.AddOtlpExporter(otlpOptions =>
+        {
+          otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
+          otlpOptions.ExportProcessorType = ExportProcessorType.Simple;
+          otlpOptions.Endpoint = new Uri($"{configuration.GetValue<string>("Otlp:Endpoint")}/v1/logs");
+        });
+      });
+      builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+      {
+        opt.IncludeScopes = true;
+        opt.ParseStateValues = true;
+        opt.IncludeFormattedMessage = true;
+      });
+    });
+
+    var logger = loggingFactory.CreateLogger<Counter>();
+
+    using var source = new ActivitySource(subscribedSourceName);
+    using var activity = source.StartActivity(ClientSemantics.DisplayName.CounterButtonClick, ActivityKind.Client);
+    logger.LogInformation("The counter button was clicked");
+    activity?.AddEvent(new ActivityEvent("The count button was clicked"));
+    activity?.SetTag("count", currentCount);
+    activity?.SetTag("mouse.x", 123);
+    activity?.SetTag("mouse.y", 2323);
   }
 }

@@ -18,7 +18,7 @@ namespace BlazorExample.Server
 {
     internal static class ServerSemantics
     {
-        public const string ServiceName = "BlazorExample_ServerService";
+        public const string ServiceName = "BlazorExample_Server";
         public const string UiActivity = "WeatherRequest";
     }
 }

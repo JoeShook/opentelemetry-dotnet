@@ -2,15 +2,15 @@
 @using BlazorExample.Shared
 @using System.Diagnostics
 @using OpenTelemetry
-@using OpenTelemetry.Exporter
 @using OpenTelemetry.Resources
 @using OpenTelemetry.Trace
 
-@inject HttpClient _http
-@inject IConfiguration _configuration
+@inject HttpClient http
+@inject IConfiguration configuration
+@inject ILogger<FetchData> logger;
 
 @*
-  WebAsm in .Net 6.0 currently single-threaded.  Enforced by depenedent .net libraries.  See comments in program.cs
+    WebAsm in .Net 6.0 currently single-threaded.  Enforced by depenedent .net libraries.  See comments in program.cs
 *@
 @* @inject TracerProvider traceProvider *@
 
@@ -55,33 +55,33 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // var MyActivitySource = new ActivitySource(ClientSemantics.ServiceName);
-        // using var activity = MyActivitySource.StartActivity("SayHello");
-        // activity?.SetTag("foo", 1);
+      var subscribedSourceName = ClientSemantics.SubscribedSourceName.UIWeatherRequest;
 
-        using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-          .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("client-otlp-test"))
-          .AddSource("BlazorUI-Weather")
+      // Something to listen for activities
+      using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+          .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName))
+          .AddSource(subscribedSourceName)
           .SetSampler(new AlwaysOnSampler())
           .AddHttpClientInstrumentation(c => c.RecordException = true)
           .AddZipkinExporter(o =>
           {
-              o.Endpoint = new Uri($"{_configuration.GetValue<string>("Zipkin:Endpoint")}");
+              o.Endpoint = new Uri($"{configuration.GetValue<string>("Zipkin:Endpoint")}");
               o.ExportProcessorType = ExportProcessorType.Simple;
           })
           .Build();
-        using var source = new ActivitySource("BlazorUI-Weather");
-        using (var activity = source.StartActivity("Click", ActivityKind.Client))
+
+        using var source = new ActivitySource(subscribedSourceName);
+        using (var activity = source.StartActivity(ClientSemantics.DisplayName.WeatherButtonClick, ActivityKind.Client))
         {
-            Console.WriteLine(activity.TraceId);
+            // Console.WriteLine(activity?.TraceId);
             activity?.AddEvent(new ActivityEvent("The weather button was clicked"));
             activity?.SetTag("mouse.x", 123);
             activity?.SetTag("mouse.y", 2323);
-          
-            forecasts = await _http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
-          
-        }
 
-      await Task.Delay(500);
+            logger.LogInformation("The weather button was clicked");
+
+            // .AddHttpClientInstrumentation extension enabled capture of this http call.
+            forecasts = await http.GetFromJsonAsync<WeatherForecast[]>("WeatherForecast");
+        }
     }
 }

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Runtime.InteropServices;
 using BlazorExample.Shared;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,12 +28,12 @@ namespace BlazorExample.Server.Controllers
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
         };
 
-        private readonly ILogger<WeatherForecastController> _logger;
+        private readonly ILogger<WeatherForecastController> logger;
         private readonly HttpClient _httpClient = new();
 
         public WeatherForecastController(ILogger<WeatherForecastController> logger)
         {
-            _logger = logger;
+            this.logger = logger;
         }
 
         [HttpGet]
@@ -45,13 +44,21 @@ namespace BlazorExample.Server.Controllers
             // automatically as child of incoming request.
             var res = _httpClient.GetStringAsync("http://www.google.com").Result;
 
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+            var rng = new Random();
+            var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+                {
+                    Date = DateTime.Now.AddDays(index),
+                    TemperatureC = rng.Next(-20, 55),
+                    Summary = Summaries[rng.Next(Summaries.Length)],
+                })
+                .ToArray();
+
+            this.logger.LogInformation(
+                "WeatherForecasts generated {count}: {forecasts}",
+                forecast.Length,
+                forecast);
+
+            return forecast;
         }
     }
 }

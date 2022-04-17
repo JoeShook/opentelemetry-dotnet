@@ -19,6 +19,7 @@ using BlazorExample.Server;
 using Microsoft.AspNetCore.ResponseCompression;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -98,6 +99,34 @@ builder.Services.AddOpenTelemetryTracing(options =>
             break;
     }
 });
+
+// Logging
+// builder.Logging.ClearProviders();
+//
+// builder.Logging.AddOpenTelemetry(options =>
+// {
+//     options.SetResourceBuilder(resourceBuilder);
+//     var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+//     switch (logExporter)
+//     {
+//         case "otlp":
+//             options.AddOtlpExporter(otlpOptions =>
+//             {
+//                 otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+//             });
+//             break;
+//         default:
+//             options.AddConsoleExporter();
+//             break;
+//     }
+// });
+//
+// builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+// {
+//     opt.IncludeScopes = true;
+//     opt.ParseStateValues = true;
+//     opt.IncludeFormattedMessage = true;
+// });
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
