@@ -17,14 +17,14 @@
 namespace BlazorExample.Client
 {
     /// <summary>
-    /// General naming and organizing of telemetry semantics for the Blazor Client
+    /// General naming and organizing of telemetry semantics for the Blazor Client.
     /// </summary>
     internal static class ClientSemantics
     {
-        public const string ServiceName = "BlazorExample_Client";
+        public const string ServiceName = "blazor-client";
 
         /// <summary>
-        /// The Activity display names
+        /// The Activity display names.
         /// </summary>
         public static class DisplayName
         {
@@ -34,7 +34,7 @@ namespace BlazorExample.Client
 
         /// <summary>
         /// Activity Source names.
-        /// Remember an <see cref="ActivitySource"/> name will need a listener to be recorded
+        /// Remember an <see cref="ActivitySource"/> name will need a listener to be recorded.
         /// </summary>
         public static class SubscribedSourceName
         {

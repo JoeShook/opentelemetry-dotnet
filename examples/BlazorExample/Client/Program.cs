@@ -20,18 +20,15 @@ using System.Reflection;
 using BlazorExample.Client;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using OpenTelemetry;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
 builder.RootComponents.Add<App>("#app");
+
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-//
-//  See OpenTelemetry exporter comment below.
-//
+// See OpenTelemetry exporter comment below.
 
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
@@ -100,7 +97,7 @@ var resourceBuilder = tracingExporter switch
 //
 //
 
-//     case "otlp":
+// case "otlp":
 //         options.AddOtlpExporter(otlpOptions =>
 //         {
 //             otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
@@ -120,7 +117,8 @@ var resourceBuilder = tracingExporter switch
 // builder.Logging.ClearProviders();
 
 //
-// I could not get this to even trigger in the debugger like the previous trace example, so moving inline.
+// Same problem as with Tracing above. Might need to look at Javascript telemetry and see how they do this.
+// Blazor 7 should handle this.
 //
 
 // builder.Logging.AddOpenTelemetry(options =>

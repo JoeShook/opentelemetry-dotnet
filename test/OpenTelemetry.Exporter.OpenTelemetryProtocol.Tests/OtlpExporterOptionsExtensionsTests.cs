@@ -131,7 +131,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(expectedExportClientType, exportClient.GetType());
         }
 
-
         [Theory]
         [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcLogsExportClient))]
         [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpLogsExportClient))]

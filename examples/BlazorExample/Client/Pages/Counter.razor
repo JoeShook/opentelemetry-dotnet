@@ -29,8 +29,8 @@
   {
     var subscribedSourceName = ClientSemantics.SubscribedSourceName.UICounter;
     var resourceBuilder = ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName);
-    // Only TraceProvider is OpenTelemetry specific here.
-    using var openTelemetry = Sdk.CreateTracerProviderBuilder() 
+    // TraceProvider is OpenTelemetry specific here.
+    using var traceProvider = Sdk.CreateTracerProviderBuilder() 
       .SetResourceBuilder(resourceBuilder)
       .AddSource(subscribedSourceName)
       .AddZipkinExporter(o =>

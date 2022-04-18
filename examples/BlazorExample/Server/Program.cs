@@ -16,17 +16,13 @@
 
 using System.Reflection;
 using BlazorExample.Server;
-using Microsoft.AspNetCore.ResponseCompression;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
-
 
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
@@ -41,7 +37,6 @@ var resourceBuilder = tracingExporter switch
     _ => ResourceBuilder.CreateDefault().AddService(ServerSemantics.ServiceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
 };
 
-
 // Traces
 builder.Services.AddOpenTelemetryTracing(options =>
 {
@@ -49,8 +44,6 @@ builder.Services.AddOpenTelemetryTracing(options =>
     options.SetSampler(new AlwaysOnSampler());
     options.AddSource(ServerSemantics.UiActivity);
     options.AddHttpClientInstrumentation(c => c.RecordException = true);
-
-    options.AddConsoleExporter();
 });
 
 // Traces
@@ -80,12 +73,6 @@ builder.Services.AddOpenTelemetryTracing(options =>
             break;
 
         case "otlp":
-            // options.AddOtlpExporter(otlpOptions =>
-            // {
-            //     otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
-            //     otlpOptions.ExportProcessorType = ExportProcessorType.Simple;
-            //     otlpOptions.Endpoint = new Uri($"{builder.Configuration.GetValue<string>("Otlp:Endpoint")}/v1/traces");
-            // });
             options.AddOtlpExporter(otlpOptions =>
             {
                 otlpOptions.ExportProcessorType = ExportProcessorType.Simple;
@@ -101,35 +88,36 @@ builder.Services.AddOpenTelemetryTracing(options =>
 });
 
 // Logging
-// builder.Logging.ClearProviders();
-//
-// builder.Logging.AddOpenTelemetry(options =>
-// {
-//     options.SetResourceBuilder(resourceBuilder);
-//     var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
-//     switch (logExporter)
-//     {
-//         case "otlp":
-//             options.AddOtlpExporter(otlpOptions =>
-//             {
-//                 otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
-//             });
-//             break;
-//         default:
-//             options.AddConsoleExporter();
-//             break;
-//     }
-// });
-//
-// builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
-// {
-//     opt.IncludeScopes = true;
-//     opt.ParseStateValues = true;
-//     opt.IncludeFormattedMessage = true;
-// });
+builder.Logging.ClearProviders();
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.SetResourceBuilder(resourceBuilder);
+    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+    switch (logExporter)
+    {
+        case "otlp":
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+            });
+            break;
+        default:
+            options.AddConsoleExporter();
+            break;
+    }
+});
+
+builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+{
+    opt.IncludeScopes = true;
+    opt.ParseStateValues = true;
+    opt.IncludeFormattedMessage = true;
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -142,18 +130,22 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error");
+
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 }
 
 app.UseHttpsRedirection();
 
 app.UseBlazorFrameworkFiles();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.MapRazorPages();
+
 app.MapControllers();
+
 app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -2,6 +2,8 @@
 @using BlazorExample.Shared
 @using System.Diagnostics
 @using OpenTelemetry
+@using OpenTelemetry.Exporter
+@using OpenTelemetry.Logs
 @using OpenTelemetry.Resources
 @using OpenTelemetry.Trace
 
@@ -55,20 +57,43 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-      var subscribedSourceName = ClientSemantics.SubscribedSourceName.UIWeatherRequest;
+        var subscribedSourceName = ClientSemantics.SubscribedSourceName.UIWeatherRequest;
+        var resourceBuilder = ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName);
 
-      // Something to listen for activities
-      using var openTelemetry = Sdk.CreateTracerProviderBuilder()
-          .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName))
-          .AddSource(subscribedSourceName)
-          .SetSampler(new AlwaysOnSampler())
-          .AddHttpClientInstrumentation(c => c.RecordException = true)
-          .AddZipkinExporter(o =>
+        // Something to listen for activities
+        using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            .SetResourceBuilder(resourceBuilder)
+            .AddSource(subscribedSourceName)
+            .SetSampler(new AlwaysOnSampler())
+            .AddHttpClientInstrumentation(c => c.RecordException = true)
+            .AddZipkinExporter(o =>
+            {
+                o.Endpoint = new Uri($"{configuration.GetValue<string>("Zipkin:Endpoint")}");
+                o.ExportProcessorType = ExportProcessorType.Simple;
+            })
+            .Build();
+
+        using var loggingFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddOpenTelemetry(options =>
           {
-              o.Endpoint = new Uri($"{configuration.GetValue<string>("Zipkin:Endpoint")}");
-              o.ExportProcessorType = ExportProcessorType.Simple;
-          })
-          .Build();
+              options.SetResourceBuilder(resourceBuilder);
+              options.AddOtlpExporter(otlpOptions =>
+              {
+                otlpOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
+                otlpOptions.ExportProcessorType = ExportProcessorType.Simple;
+                otlpOptions.Endpoint = new Uri($"{configuration.GetValue<string>("Otlp:Endpoint")}/v1/logs");
+              });
+          });
+          builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+          {
+              opt.IncludeScopes = true;
+              opt.ParseStateValues = true;
+              opt.IncludeFormattedMessage = true;
+          });
+        });
+
+        var logger = loggingFactory.CreateLogger<Counter>();
 
         using var source = new ActivitySource(subscribedSourceName);
         using (var activity = source.StartActivity(ClientSemantics.DisplayName.WeatherButtonClick, ActivityKind.Client))

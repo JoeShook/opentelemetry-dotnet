@@ -23,7 +23,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+#if NET5_0_OR_GREATER
 using System.Runtime.InteropServices;
+#endif
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;

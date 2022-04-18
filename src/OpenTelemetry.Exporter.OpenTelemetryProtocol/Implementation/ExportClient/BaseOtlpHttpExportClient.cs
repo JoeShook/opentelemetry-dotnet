@@ -17,7 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+#if NET5_0_OR_GREATER
 using System.Runtime.InteropServices;
+#endif
 using System.Threading;
 using OpenTelemetry.Internal;
 

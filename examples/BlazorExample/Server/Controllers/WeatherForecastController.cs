@@ -29,7 +29,7 @@ namespace BlazorExample.Server.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> logger;
-        private readonly HttpClient _httpClient = new();
+        private readonly HttpClient httpClient = new();
 
         public WeatherForecastController(ILogger<WeatherForecastController> logger)
         {
@@ -42,7 +42,8 @@ namespace BlazorExample.Server.Controllers
             // Making an http call here to serve as an example of
             // how dependency calls will be captured and treated
             // automatically as child of incoming request.
-            var res = _httpClient.GetStringAsync("http://www.google.com").Result;
+
+            var res = this.httpClient.GetStringAsync("http://www.google.com").Result;
 
             var rng = new Random();
             var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
