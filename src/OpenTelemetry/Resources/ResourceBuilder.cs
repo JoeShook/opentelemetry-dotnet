@@ -39,19 +39,6 @@ namespace OpenTelemetry.Resources
                 ":" + System.Diagnostics.Process.GetCurrentProcess().ProcessName),
         });
 
-        private static string GetCurrentProcessName()
-        {
-            try
-            {
-                return System.Diagnostics.Process.GetCurrentProcess().ProcessName;
-            }
-            catch (Exception)
-            {
-                // Expected when hosted in WebAssembly
-                return null;
-            }
-        }
-
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with Default
         /// service.name added. See <a
@@ -121,6 +108,19 @@ namespace OpenTelemetry.Resources
             this.resources.Add(resource);
 
             return this;
+        }
+
+        private static string GetCurrentProcessName()
+        {
+            try
+            {
+                return System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+            }
+            catch (Exception)
+            {
+                // Expected when hosted in WebAssembly
+                return null;
+            }
         }
     }
 }
