@@ -7,7 +7,6 @@
     <MinVerTagPrefix>core-</MinVerTagPrefix>
     <!-- TODO: Remove this once a version targeting net5.0 is released -->
     <RunApiCompat Condition="$(TargetFramework) == 'net5.0'">false</RunApiCompat>
-    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

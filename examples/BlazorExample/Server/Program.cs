@@ -88,7 +88,7 @@ builder.Services.AddOpenTelemetryTracing(options =>
 });
 
 // Logging
-builder.Logging.ClearProviders();
+// builder.Logging.ClearProviders();
 
 builder.Logging.AddOpenTelemetry(options =>
 {

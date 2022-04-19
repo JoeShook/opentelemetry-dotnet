@@ -1,4 +1,4 @@
-// <copyright file="Error.cs" company="OpenTelemetry Authors">
+// <copyright file="ErrorModel.cshtml.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,20 +24,20 @@ namespace BlazorExample.Server.Pages
     [IgnoreAntiforgeryToken]
     public class ErrorModel : PageModel
     {
-        public string? RequestId { get; set; }
-
-        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
-
-        private readonly ILogger<ErrorModel> _logger;
+        private readonly ILogger<ErrorModel> logger;
 
         public ErrorModel(ILogger<ErrorModel> logger)
         {
-            _logger = logger;
+            this.logger = logger;
         }
+
+        public string? RequestId { get; set; }
+
+        public bool ShowRequestId => !string.IsNullOrEmpty(this.RequestId);
 
         public void OnGet()
         {
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+            this.RequestId = Activity.Current?.Id ?? this.HttpContext.TraceIdentifier;
         }
     }
 }
