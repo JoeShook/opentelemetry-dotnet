@@ -22,7 +22,52 @@
 
     private void IncrementCount()
     {
+      
       Trace(currentCount++);
+      //
+      // currentCount++;
+      // var activities = new Activity[1];
+      // var subscribedSourceName = ClientSemantics.SubscribedSourceName.UICounter;
+      // var resourceBuilder = ResourceBuilder.CreateDefault().AddService(ClientSemantics.ServiceName);
+      //
+      //  
+      //  // using var activity = source.StartActivity(ClientSemantics.DisplayName.CounterButtonClick, ActivityKind.Client);
+      //
+      //  //var parentContext = new SpanContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, true);
+      //  
+      //  //
+      // var activity = new Activity(ClientSemantics.DisplayName.CounterButtonClick);
+      // //activity.SetParentId(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+      // activity.Start();
+      //
+      //
+      //  activity?.AddEvent(new ActivityEvent("The count button was clicked"));
+      //  activity?.SetTag("count", currentCount);
+      //  activity?.SetTag("mouse.x", 123);
+      //  activity?.SetTag("mouse.y", 2323);
+      //
+      //  var traceExporter = new ZipkinExporter(new ZipkinExporterOptions()
+      //  {
+      //    Endpoint = new Uri($"{configuration.GetValue<string>("Zipkin:Endpoint")}"),
+      //    ExportProcessorType = ExportProcessorType.Simple
+      //  });
+       
+      //
+      // this does record a trace but it is under the name of unknown_service
+      // There is no access to the Resource object via the internal method SetLocalEndpointFromResource.
+      // So not a ayt to set a ServiceName so ZipkinExporter would pick up the ServiceName.
+      // The whole stack is well protected and hardwired to depend on a TraceProvider and thus tying
+      // code to the ActivityListener.
+      //
+      // 
+      // 
+      //
+
+       // activities[0] = activity;
+       // var batchActivity = new Batch<Activity>(activities, 1);
+       //
+       // traceExporter.Export(batchActivity);
+
     }
 
   private void Trace(int currentCount)
