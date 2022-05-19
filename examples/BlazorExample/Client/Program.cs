@@ -89,7 +89,6 @@ var resourceBuilder = tracingExporter switch
 //
 //    Issues opened against dotnet/runtime related to this issue.
 //    https://github.com/dotnet/runtime/issues/61308
-//    https://github.com/dotnet/runtime/issues/61308
 //
 //    Issue that has a Milestone of .NET 7 Planning to add "Real multithreading (on supported browsers).
 //    So maybe this technique can be revisited later this year when we see 7.0 bits with this feature.
